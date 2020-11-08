@@ -1,14 +1,36 @@
 const express = require('express');
-const bodyParse = require('body-parser');
+const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-
+const multer = require('multer');
 
 const app = express();
 // const productRoutes = require('./src/routes/product');
 const authRoutes = require('./src/routes/auth');
 const blogRoutes = require('./src/routes/blog');
 
-app.use(bodyParse.json()); //type JSON
+
+const fileStorage = multer.diskStorage({
+    destination: (res,file,cb) => {
+        cb(null,'images');
+    },
+    filename:(req,file,cb) =>{
+        cb(null,new Date().getTime()+'-'+ file.originalname)
+    }
+})
+
+const fileFilter = (req,file,cb) =>{
+    if( file.mimetype === "image/png" ||
+        file.mimetype === 'image/jpg' || 
+        file.mimetype === 'image/jpeg'
+    ){
+        cb(null,true);
+    }else{
+        cb(null,false);
+    }
+}
+
+app.use(bodyParser.json()); //type JSON
+app.use(multer({storage:fileStorage,fileFilter:fileFilter}).single('image'));
 
 app.use((req,res,next) => {
     res.setHeader('Access-Control-Allow-Origin','*');
@@ -27,11 +49,8 @@ app.use((error,req,res,next) => {
     res.status(status).json({message:message ,data: data});
 });
 
-mongoose.connect('mongodb+srv://rikixap:9ET62PazEiGuqbk@cluster0.ecnag.mongodb.net/blog?retryWrites=true&w=majority')
+mongoose.connect('mongodb+srv://rikixap:thedramma@cluster0.ecnag.mongodb.net/blog?retryWrites=true&w=majority')
 .then(() => {
-    
     app.listen(4000, () => console.log('Connection Sucess'));
 })
 .catch(err => console.log(err));
-
-app.listen(4000);
